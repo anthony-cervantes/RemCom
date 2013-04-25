@@ -2,7 +2,8 @@
 	Copyright (c) 2006-2012 Talha Tariq [ talha.tariq@gmail.com ] 
                             Luke Suchocki
                             Merlyn Morgan-Graham 
-                            Andres Ederra 
+                            Andres Ederra
+
 	All rights are reserved.
 
 	Permission to use, copy, modify, and distribute this software 
@@ -575,7 +576,7 @@ BOOL EstablishConnection( LPCTSTR lpszRemote, LPCTSTR lpszResource, BOOL bEstabl
 
 // Copies the command's exe file to remote machine (\\remote\ADMIN$)
 // This function called, if the /c option is used
-BOOL CopyBinaryToRemoteSystem()
+BOOL CopyBinaryToRemoteMachine()
 {
 	if ( !IsCmdLineParameter(_T("c")) )
 		return TRUE;
@@ -593,6 +594,23 @@ BOOL CopyBinaryToRemoteSystem()
 
 	// Copy the Command's exe file to \\remote\ADMIN$
 	return CopyFile( lpszCommandExe, szRemoteResource, FALSE );
+}
+
+BOOL DeleteBinaryFromRemoteMachine() 
+{
+   if ( IsCmdLineParameter(_T("c")) ) 
+   {
+       TCHAR drive[_MAX_DRIVE];
+       TCHAR dir[_MAX_DIR];
+       TCHAR fname[_MAX_FNAME];
+       TCHAR ext[_MAX_EXT];
+       TCHAR szRemoteResource[_MAX_PATH];
+
+       _tsplitpath( lpszCommandExe, drive, dir, fname, ext );
+       _stprintf( szRemoteResource, _T("%s\\ADMIN$\\%s%s"), lpszMachine, fname, ext );
+
+       return DeleteFile(szRemoteResource);
+   }
 }
 
 // Copies the Local Process Launcher Executable from Self Resource -> Copies to Current Path 
@@ -673,7 +691,7 @@ BOOL CopyServiceToRemoteMachine()
 
 	_stprintf( szSvcExePath, _T("%s\\ADMIN$\\%s"), lpszMachine, RemComSVCEXE );
 
-	// Copy binary file from resources to \\remote\ADMIN$\System32
+	// Copy binary file from resources to \\remote\ADMIN$
 	HANDLE hFileSvcExecutable = CreateFile( 
 		szSvcExePath,
 		GENERIC_WRITE,
@@ -691,6 +709,13 @@ BOOL CopyServiceToRemoteMachine()
 	CloseHandle( hFileSvcExecutable );
 
 	return dwWritten == dwSvcExecutableSize;
+}
+
+BOOL DeleteServiceFromRemoteMachine()
+{
+   TCHAR szSvcExePath[_MAX_PATH];
+   _stprintf( szSvcExePath, _T("%s\\ADMIN$\\%s"), lpszMachine, RemComSVCEXE );
+   return DeleteFile(szSvcExePath);
 }
 
 // Installs and starts the remote service on remote machine
@@ -1115,20 +1140,6 @@ BOOL WINAPI ConsoleCtrlHandler( DWORD dwCtrlType )
 	}
 
 	return FALSE;
-}
-
-
-void ShowCopyRight()
-{
-	Error( _T("\n") );
-	Error( _T("  Remote Command Executor\n") );
-	Error( _T("  Copyright 2006-2012 [ https://github.com/kavika13/RemCom ] \n") );
-	Error( _T("  Author: Talha Tariq [talha.tariq@gmail.com]\n") );
-	Error( _T("  Contributor: Luke Suchocki\n") );
-	Error( _T("  Contributor: Merlyn Morgan-Graham\n") );
-	Error( _T("  Contributor: Andres Ederra\n") );
-	
-	Error( _T("\n") );
 }
 
 void ShowUsage()
@@ -1975,8 +1986,6 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
 
 	GetRemoteCommandArguments( szArguments );
 
-	ShowCopyRight();
-
 	// Show help, if parameters are incorrect, or /?,/h,/help
 	if (  IsCmdLineParameter( _T("h") ) || 
 		IsCmdLineParameter( _T("?") ) || 
@@ -2120,7 +2129,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
 
      
    // Copy the command's exe file to remote machine (if using /c)
-   if ( !CopyBinaryToRemoteSystem() )
+   if ( !CopyBinaryToRemoteMachine() )
    {
       rc = -6;
       Error( _T("Failed\n\n") );
@@ -2179,6 +2188,17 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
  }
 
  cleanup:
+   
+   if ( !DeleteBinaryFromRemoteMachine() ) 
+   {
+      Error( _T("Couldn't cleanup the copied binary.\n") );
+      ShowLastError(); 
+   }
+
+   if ( !DeleteServiceFromRemoteMachine() ) {
+       Error( _T("Couldn't cleanup the service executable.\n") );
+       ShowLastError();
+   }
 
    // Disconnect from remote machine
    EstablishConnection( lpszMachine, _T("IPC$"), FALSE );
