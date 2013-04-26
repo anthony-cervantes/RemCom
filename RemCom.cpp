@@ -611,6 +611,7 @@ BOOL DeleteBinaryFromRemoteMachine()
 
        return DeleteFile(szRemoteResource);
    }
+   return TRUE;
 }
 
 // Copies the Local Process Launcher Executable from Self Resource -> Copies to Current Path 
@@ -1111,11 +1112,11 @@ BOOL ExecuteRemoteCommand()
 
 		// Waiting for response from service
 
-		Error( _T("Remote program Stderr start:\n") );
+		Error( _T("----OUTPUT----\n") );
 
 		ReadFile( hCommandPipe, &response, sizeof(response), &dwTemp, NULL );
 		
-		Error( _T("Remote program Stderr end.\n") );
+		Error( _T("----/OUTPUT----\n") );
 	}
 	else
 		Error( _T("Failed\n\n") );
@@ -1143,10 +1144,8 @@ BOOL WINAPI ConsoleCtrlHandler( DWORD dwCtrlType )
 }
 
 void ShowUsage()
-{
- Out( _T("------------------------------------------------------------------\n") );    
- Out( _T("| Usage: RemCom.exe [\\\\computer] [options] [cmd/exe arguments] |\n") );
- Out( _T("------------------------------------------------------------------\n") );
+{ 
+ Out( _T("usage: remcom \\\\computer [options] cmd [args...]\n") );
  Out( _T("\n") );
  Out( _T("Options:\n") );
  Out( _T("\n") );
@@ -1160,42 +1159,26 @@ void ShowUsage()
  Out( _T("\n") );
  Out( _T(" /c\t\t\tCopy the specified program to the remote machine's\n") );
  Out( _T("   \t\t\t\"%SystemRoot%\" directory\n") );
- Out( _T("   \t\t\tCommand's exe file must be absolute to local machine\n") );
  Out( _T("\n") );
- Out( _T("   .........................................................................\n") );
  Out( _T("\n") );
  Out( _T("Examples:\n") );
  Out( _T("\n") );
  Out( _T(" RemCom.exe \\\\remote cmd\t[Starts a \"telnet\" client]\n") );
- Out( _T(" RemCom.exe \\\\remote /user:Username /pwd:Password cmd.exe\t[Starts a \"telnet\" client]\n") );
- Out( _T(" RemCom.exe \\\\localhost /user:Username /pwd:Password  \"C:\\InstallMe.bat\"\t[A replacement for RunAs Command]\"\n") );
- Out( _T(" RemCom.exe \\\\localhost /user:Username /pwd:Password  \"cmd.exe /c dir c:\\\"\t[Executes a cmd.exe, for intance \"dir c:\\\"]\"\n") );
-  Out( _T("\n") );
- Out( _T("   .........................................................................\n") );
+ Out( _T(" RemCom.exe \\\\localhost /user:Username /pwd:Password ping example.com\n") );
  Out( _T("\n") );
  Out( _T("Notes:\n") );
  Out( _T("\n") );
- Out( _T("-  A \".\" for Machine Name will be treated as localhost.\n") ); 
- Out( _T("-  Input is passed to remote machine when you press the ENTER.\n") ); 
+ Out( _T("-  A \".\" for Machine Name will be treated as localhost.\n") );
  Out( _T("-  Ctrl-C terminates the remote process.\n") );
  Out( _T("-  Command and file path arguments have to be absolute to remote machine.\n") );
- Out( _T("-  If you are using /c option, command exe file path must be absolute to\n") );
- Out( _T("   local machine, but the arguments must be absolute to remote machine\n") );
  Out( _T("-  A dot . for machine name is taken as localhost.\n") );
- Out( _T("-  Not providing any credentials, the Process will (impersonate and) run\n") );  
+ Out( _T("-  Not providing any credentials, the process will (impersonate and) run\n") );  
  Out( _T("   in the context of your account on the remote system, but will not have\n") );  
- Out( _T("   access to network resources.\n") );  
- Out( _T("-  Specify a valid user name in the Domain\\User syntax if the remote process\n") );  
- Out( _T("   requires access to network resources or to run in a different account. \n") );  
- Out( _T("-  The password is transmitted in clear text to the remote system.\n") );  
- Out( _T("-  You can enclose applications that have spaces in their name with \n") );  
- Out( _T("   quotation marks  e.g. RemCom \\\\computername \"c:\\long name app.exe\".\n") );  
- Out( _T("-  Input is only passed to the remote system when you press the enter key.\n") );  
- Out( _T("-  Typing Ctrl-C terminates the remote process.\n") );  
- Out( _T("-  Error codes from the applications you execute are shown as part of remcom output.\n") );
- Out( _T("-  RemCom error code list can be found at the documentation and sources.\n") );  
- Out( _T(" \n") );  
- Out( _T("   .........................................................................\n") );
+ Out( _T("   access to network resources.\n") );
+ Out( _T("-  The password is transmitted in clear text to the remote system.\n") );
+ Out( _T("-  Error codes from the applications you execute are shown as part of RemCom output.\n") );
+ Out( _T("-  RemCom error code list can be found at the documentation and sources.\n") );
+ Out( _T(" \n") );
 
 }
 
