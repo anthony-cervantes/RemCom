@@ -106,8 +106,8 @@ LPCTSTR		lpszPassword = NULL;
 LPCTSTR		lpszUser = NULL;
 LPCTSTR		lpszDomain = NULL;
 LPCTSTR		lpszCommandExe = NULL;
-LPCTSTR		lpszCopyDst = "c$\\Windows";
-LPCTSTR		lpszCopyExDst = "c:\\Windows";
+LPCTSTR		lpszUncWorkingDst = "c$\\Windows";
+LPCTSTR		lpszWorkingDst = "c:\\Windows";
 
 // Named Pipes for Input and Output
 HANDLE		hCommandPipe = INVALID_HANDLE_VALUE;
@@ -601,7 +601,7 @@ BOOL CopyBinaryToRemoteMachine()
     // Gets the file name and extension
     _tsplitpath( lpszCommandExe, drive, dir, fname, ext );
 
-    _stprintf( szRemoteResource, _T("%s\\%s\\%s%s"), lpszMachine, lpszCopyDst, fname, ext );
+    _stprintf( szRemoteResource, _T("%s\\%s\\%s%s"), lpszMachine, lpszUncWorkingDst, fname, ext );
 
     // Copy the Command's exe file to \\remote\ADMIN$
     return CopyFile( lpszCommandExe, szRemoteResource, FALSE );
@@ -619,7 +619,7 @@ BOOL DeleteBinaryFromRemoteMachine()
     TCHAR szRemoteResource[_MAX_PATH];
 
     _tsplitpath( lpszCommandExe, drive, dir, fname, ext );
-    _stprintf( szRemoteResource, _T("%s\\%s\\%s%s"), lpszMachine, lpszCopyDst, fname, ext );
+    _stprintf( szRemoteResource, _T("%s\\%s\\%s%s"), lpszMachine, lpszUncWorkingDst, fname, ext );
 
     return DeleteFile(szRemoteResource);
 }
@@ -812,7 +812,7 @@ BOOL ConnectToRemoteService( DWORD dwRetry, DWORD dwRetryTimeOut )
 // This structure will be transferred to remote machine
 BOOL BuildMessageStructure( RemComMessage* pMsg )
 {
-    LPCTSTR lpszWorkingDir = GetParamValue( _T("d") );
+    //LPCTSTR lpszWorkingDir = GetParamValue( _T("d") );
 
     // Info
     pMsg->dwProcessId = GetCurrentProcessId();
@@ -821,10 +821,9 @@ BOOL BuildMessageStructure( RemComMessage* pMsg )
     // Cmd
     if ( !IsCmdLineParameter(_T("c")) )
     {
-        if (lpszWorkingDir != NULL)
+        if ( GetParamValue( _T("d") ) != NULL)
         {
-            lpszWorkingDir = TrimRight( lpszWorkingDir, '\\');
-            _stprintf( pMsg->szCommand, _T("%s\\%s %s"), lpszWorkingDir, lpszCommandExe, szArguments );
+            _stprintf( pMsg->szCommand, _T("%s\\%s %s"), lpszWorkingDst, lpszCommandExe, szArguments );
         }
         else
         {
@@ -840,7 +839,7 @@ BOOL BuildMessageStructure( RemComMessage* pMsg )
 
         _tsplitpath( lpszCommandExe, drive, dir, fname, ext );
 
-        _stprintf( pMsg->szCommand, _T("%s\\%s%s %s"), lpszCopyExDst, fname, ext, szArguments );
+        _stprintf( pMsg->szCommand, _T("%s\\%s%s %s"), lpszWorkingDst, fname, ext, szArguments );
     }	
 
     // Priority
@@ -1168,17 +1167,19 @@ void ShowUsage()
  Out( _T(" [/idle | /normal | /high | /realtime]\tPriority class (use only one)\n") );
  Out( _T("  /nowait\t\tDon't wait for remote process to terminate\n") );
  Out( _T("\n") );
- Out( _T(" /c:[destination]\tCopy the specified program to the remote machine.\n") );
- Out( _T("   \t\t\tCopy to %SystemRoot% if no destination provided.\n") );
+ Out( _T(" /c\t\t\tCopy the specified program to the remote machine\n") );
+ Out( _T("   \t\t\tand execute it.\n") );
  Out( _T(" /k\t\t\tDelete the specified binary and remcom service\n") );
  Out( _T("   \t\t\texecutable upon completion.\n") );
- Out( _T(" /o:[destination]\tOnly copy the program, without executing it.\n") );
+ Out( _T(" /o\t\t\tOnly copy the program, without executing it.\n") );
  Out( _T("\n") );
  Out( _T("\n") );
  Out( _T("Examples:\n") );
  Out( _T("\n") );
- Out( _T(" RemCom.exe \\\\remote cmd\t[Starts a \"telnet\" client]\n") );
- Out( _T(" RemCom.exe \\\\localhost /user:Username /pwd:Password ping example.com\n") );
+ Out( _T(" remcom \\\\remote cmd\t[Starts a \"telnet\" client]\n") );
+ Out( _T(" remcom \\\\localhost /user:$user /pwd:$pwd ping example.com\n") );
+ Out( _T(" remcom \\\\localhost /user:$user /pwd:$pwd /d:C:\ /c /k test.exe\t\n") );
+ Out( _T(" [Copies test.exe to remote 'C:\\' directory, executes it, and removes it]\n") );
  Out( _T("\n") );
  Out( _T("Notes:\n") );
  Out( _T("\n") );
@@ -1996,14 +1997,14 @@ LPCTSTR TrimRight( LPCTSTR str, TCHAR c )
     return trimd_str;
 }
 
-void SetCopyDirectory( LPCTSTR dir )
+void SetWorkingDir( LPCTSTR dir )
 {
     if (dir == NULL)
         return;
     dir = TrimRight(dir, '\\');
 
-    lpszCopyDst = replaceChar(dir, ':', '$', 1);
-    lpszCopyExDst = dir;
+    lpszUncWorkingDst = replaceChar(dir, ':', '$', 1);
+    lpszWorkingDst = dir;
 }
 
 // Main function
@@ -2041,9 +2042,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
         return -1;
     }
 
-    SetCopyDirectory( GetParamValue( _T("o") ) );
-    // 'c' parameter takes precedence if both exist
-    SetCopyDirectory( GetParamValue( _T("c") ) );
+    SetWorkingDir( GetParamValue( _T("d") ) );
 
     // Initialize console's title
     _stprintf( szConsoleTitle, _T("%s : Starting Connection to: "), lpszMachine );
@@ -2173,7 +2172,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
       Error( _T(" to ") );
       Error( lpszMachine );
       Error( _T("\\") );
-      Error( lpszCopyDst );
+      Error( lpszUncWorkingDst );
       Error( _T("\n") );
       ShowLastError();
       goto cleanup;
