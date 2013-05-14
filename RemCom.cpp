@@ -581,15 +581,11 @@ BOOL EstablishConnection( LPCTSTR lpszRemote, LPCTSTR lpszResource, BOOL bEstabl
     return FALSE;
 }
 
-BOOL IsCopyMode()
-{
-    return IsCmdLineParameter(_T("c")) || IsCmdLineParameter(_T("o"));
-}
 // Copies the command's exe file to remote machine (\\remote\ADMIN$)
 // This function called, if the /c option is used
 BOOL CopyBinaryToRemoteMachine()
 {
-    if ( !IsCopyMode() )
+    if ( !IsCmdLineParameter(_T("c")) )
         return TRUE;
 
     TCHAR drive[_MAX_DRIVE];
@@ -609,9 +605,6 @@ BOOL CopyBinaryToRemoteMachine()
 
 BOOL DeleteBinaryFromRemoteMachine() 
 {
-    if ( !IsCopyMode() && !IsCmdLineParameter(_T("k")))
-        return TRUE;
-
     TCHAR drive[_MAX_DRIVE];
     TCHAR dir[_MAX_DIR];
     TCHAR fname[_MAX_FNAME];
@@ -1168,10 +1161,9 @@ void ShowUsage()
  Out( _T("  /nowait\t\tDon't wait for remote process to terminate\n") );
  Out( _T("\n") );
  Out( _T(" /c\t\t\tCopy the specified program to the remote machine\n") );
- Out( _T("   \t\t\tand execute it.\n") );
  Out( _T(" /k\t\t\tDelete the specified binary and remcom service\n") );
- Out( _T("   \t\t\texecutable upon completion.\n") );
- Out( _T(" /o\t\t\tOnly copy the program, without executing it.\n") );
+ Out( _T(" /ne\t\t\tDo not execute the command.\n") );
+ Out( _T("    \t\t\tUseful for copying and deleting files.\n") );
  Out( _T("\n") );
  Out( _T("\n") );
  Out( _T("Examples:\n") );
@@ -2178,7 +2170,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
       goto cleanup;
    }
 
-   if ( !IsCmdLineParameter(_T("o")) )
+   if ( !IsCmdLineParameter(_T("ne")) )
    {
        // Connects to remote service, maybe it's already running :)
        if ( !ConnectToRemoteService( 1, 0 ) )
@@ -2221,11 +2213,11 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
    {
        if ( !DeleteBinaryFromRemoteMachine() ) 
        {
-          Error( _T("Couldn't cleanup the copied binary.\n") );
+          Error( _T("Couldn't cleanup the binary.\n") );
           ShowLastError(); 
        }
 
-       if ( !DeleteServiceFromRemoteMachine() ) 
+       if ( !IsCmdLineParameter(_T("ne")) && !DeleteServiceFromRemoteMachine() ) 
        {
           Error( _T("Couldn't cleanup the service executable.\n") );
           ShowLastError();
