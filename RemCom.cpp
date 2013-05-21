@@ -2217,7 +2217,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
           ShowLastError(); 
        }
 
-       if ( !IsCmdLineParameter(_T("ne")) && !DeleteServiceFromRemoteMachine() ) 
+       if ( !DeleteServiceFromRemoteMachine() && GetLastError() != ERROR_FILE_NOT_FOUND ) 
        {
           Error( _T("Couldn't cleanup the service executable.\n") );
           ShowLastError();
