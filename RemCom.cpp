@@ -1161,7 +1161,7 @@ void ShowUsage()
  Out( _T("  /nowait\t\tDon't wait for remote process to terminate\n") );
  Out( _T("\n") );
  Out( _T(" /c\t\t\tCopy the specified program to the remote machine\n") );
- Out( _T(" /k\t\t\tDelete the specified binary and remcom service\n") );
+ Out( _T(" /x\t\t\tDelete the specified binary and remcom service\n") );
  Out( _T(" /ne\t\t\tDo not execute the command.\n") );
  Out( _T("    \t\t\tUseful for copying and deleting files.\n") );
  Out( _T("\n") );
@@ -1170,7 +1170,7 @@ void ShowUsage()
  Out( _T("\n") );
  Out( _T(" remcom \\\\remote cmd\t[Starts a \"telnet\" client]\n") );
  Out( _T(" remcom \\\\localhost /user:$user /pwd:$pwd ping example.com\n") );
- Out( _T(" remcom \\\\localhost /user:$user /pwd:$pwd /d:C:\ /c /k test.exe\t\n") );
+ Out( _T(" remcom \\\\localhost /user:$user /pwd:$pwd /d:C:\ /c /x test.exe\t\n") );
  Out( _T(" [Copies test.exe to remote 'C:\\' directory, executes it, and removes it]\n") );
  Out( _T("\n") );
  Out( _T("Notes:\n") );
@@ -2209,7 +2209,7 @@ int _tmain( DWORD, TCHAR**, TCHAR** )
        rc = ExecuteRemoteCommand();
    }
 
-   if ( IsCmdLineParameter(_T("k")) ) 
+   if ( IsCmdLineParameter(_T("x")) ) 
    {
        if ( !DeleteBinaryFromRemoteMachine() ) 
        {
