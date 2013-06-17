@@ -2,10 +2,13 @@
 
 This is a fork of [the RemCom project](http://talhatariq.wordpress.com/2006/04/14/the-open-source-psexec/), since that project seems dead, and there are patches to be made.
 
-For the most "official" documentation of this branch, see [the wiki](https://github.com/kavika13/RemCom/wiki).  The rest of this description is a placeholder for now.
+For the most "official" documentation of this branch, see [the wiki](https://github.com/kavika13/RemCom/wiki). 
 
 Changes since fork:
-
+- /d flag determines where to copy file.
+- /x flag to delete binary and service, otherwise stays on host.
+- /ne flag to prevent execution of command (ex: for simple file transfer).
+- Works for 64-bit hosts.
 
 From their site:
 
